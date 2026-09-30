@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: backend-test-postgres
+    environment:
+      POSTGRES_DB: backend_developer_test
+      POSTGRES_USER: backend_test_user
+      POSTGRES_PASSWORD: BackendTest123!
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend-test-api
+    depends_on:
+      - postgres
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=backend_developer_test;Username=backend_test_user;Password=BackendTest123!
+
+      Jwt__Key: BackendDeveloperTest-SuperSecret-JWT-Key-2026-123456789
+      Jwt__Issuer: BackendDeveloperTest.Api
+      Jwt__Audience: BackendDeveloperTest.Client
+      Jwt__ExpireMinutes: 60
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
