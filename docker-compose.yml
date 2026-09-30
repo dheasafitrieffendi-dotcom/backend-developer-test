@@ -3,13 +3,18 @@ services:
     image: postgres:17
     container_name: backend-test-postgres
     environment:
-      POSTGRES_DB: backend_developer_test
-      POSTGRES_USER: backend_test_user
-      POSTGRES_PASSWORD: BackendTest123!
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   api:
     build:
@@ -17,14 +22,15 @@ services:
       dockerfile: Dockerfile
     container_name: backend-test-api
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
 
-      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=backend_developer_test;Username=backend_test_user;Password=BackendTest123!
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
 
-      Jwt__Key: BackendDeveloperTest-SuperSecret-JWT-Key-2026-123456789
+      Jwt__Key: ${JWT_KEY}
       Jwt__Issuer: BackendDeveloperTest.Api
       Jwt__Audience: BackendDeveloperTest.Client
       Jwt__ExpireMinutes: 60
